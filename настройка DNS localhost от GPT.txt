@@ -1,0 +1,103 @@
+Шаг 1: Установите и настройте DNS-сервер BIND
+Установка BIND9:
+
+bash
+Копировать код
+sudo apt update
+sudo apt install bind9
+Настройка BIND9:
+
+Откройте файл конфигурации зоны для вашего домена:
+
+bash
+Копировать код
+sudo nano /etc/bind/named.conf.local
+Добавьте следующие строки:
+
+plaintext
+Копировать код
+zone "lims.lab" {
+    type master;
+    file "/etc/bind/db.lims.lab";
+};
+Создание файла зоны:
+
+Создайте файл зоны для вашего домена:
+
+bash
+Копировать код
+sudo nano /etc/bind/db.lims.lab
+Заполните его следующим содержимым:
+
+plaintext
+Копировать код
+;
+; BIND data file for lims.lab
+;
+$TTL    604800
+@       IN      SOA     ns.lims.lab. root.lims.lab. (
+                          2         ; Serial
+                     604800         ; Refresh
+                      86400         ; Retry
+                    2419200         ; Expire
+                     604800 )       ; Negative Cache TTL
+;
+@       IN      NS      ns.lims.lab.
+ns      IN      A       127.0.0.1
+@       IN      A       127.0.0.1
+Перезапустите BIND9:
+
+bash
+Копировать код
+sudo systemctl restart bind9
+Шаг 2: Настройте ваш DNS-клиент для использования локального DNS-сервера
+Настройка резолвера:
+
+Откройте файл /etc/resolv.conf и добавьте строку:
+
+plaintext
+Копировать код
+nameserver 127.0.0.1
+Однако, изменение /etc/resolv.conf напрямую может быть временным. Для постоянной настройки на Ubuntu используйте netplan или NetworkManager.
+
+!!!!!!!!!!!!!!!!!!!!!!!
+/etc/resolv.conf должен выглядеть так:
+nameserver 127.0.0.1
+options edns0 trust-ad
+options lo trust-ad
+search .
+
+Netplan (если используется):
+
+Откройте конфигурационный файл netplan (например, /etc/netplan/01-netcfg.yaml):
+
+plaintext
+Копировать код
+network:
+  version: 2
+  ethernets:
+    eth0:
+      addresses:
+        - 192.168.1.2/24
+      gateway4: 192.168.1.1
+      nameservers:
+        addresses:
+          - 127.0.0.1
+Примените изменения:
+
+bash
+Копировать код
+sudo netplan apply
+NetworkManager (если используется):
+
+Откройте файл /etc/NetworkManager/NetworkManager.conf и добавьте:
+
+plaintext
+Копировать код
+[main]
+dns=dnsmasq
+Перезапустите NetworkManager:
+
+bash
+Копировать код
+sudo systemctl restart NetworkManager

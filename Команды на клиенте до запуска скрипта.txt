@@ -1,0 +1,3 @@
+Открываем эту папку с помощью git bash и вводим 2 команды:
+chmod 644 dns_any.sh
+chmod 644 dns_localhost.sh
