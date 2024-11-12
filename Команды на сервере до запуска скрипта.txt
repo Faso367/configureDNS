@@ -1,0 +1,3 @@
+sudo chmod 1777 /tmp
+apt install openssh
+systemctl enable ssh

@@ -1,0 +1,115 @@
+Для настройки DNS-сервера на виртуальной машине с Ubuntu 24 и назначения доменного имени, такого как sanek.com, вы можете следовать этим шагам:
+
+Установите DNS-сервер Bind9:
+
+bash
+Копировать код
+sudo apt update
+sudo apt install bind9
+Настройка зоны прямого просмотра:
+
+Создайте файл зоны для вашего домена. Например, /etc/bind/zones/db.sanek.com.
+
+bash
+Копировать код
+sudo mkdir /etc/bind/zones
+sudo nano /etc/bind/zones/db.sanek.com
+Вставьте следующее содержимое в файл зоны:
+
+bash
+Копировать код
+$TTL 604800
+@   IN  SOA ns.sanek.com. admin.sanek.com. (
+                2024071901 ; Serial
+                604800     ; Refresh
+                86400      ; Retry
+                2419200    ; Expire
+                604800 )   ; Negative Cache TTL
+
+@   IN  NS  ns.sanek.com.
+ns  IN  A   10.0.2.15
+@   IN  A   10.0.2.15
+Настройка зоны обратного просмотра:
+
+Создайте файл зоны обратного просмотра. Например, /etc/bind/zones/db.10.0.2
+
+bash
+Копировать код
+sudo nano /etc/bind/zones/db.10.0.2
+Вставьте следующее содержимое в файл зоны обратного просмотра:
+
+bash
+Копировать код
+$TTL 604800
+@   IN  SOA ns.sanek.com. admin.sanek.com. (
+                2024071901 ; Serial
+                604800     ; Refresh
+                86400      ; Retry
+                2419200    ; Expire
+                604800 )   ; Negative Cache TTL
+
+@   IN  NS  ns.sanek.com.
+15  IN  PTR sanek.com.
+Настройка файла конфигурации Bind
+
+Откройте файл конфигурации Bind для редактирования:
+
+bash
+Копировать код
+sudo nano /etc/bind/named.conf.local
+Добавьте следующую конфигурацию:
+
+bash
+Копировать код
+zone "sanek.com" {
+    type master;
+    file "/etc/bind/zones/db.sanek.com";
+};
+
+zone "2.0.10.in-addr.arpa" {
+    type master;
+    file "/etc/bind/zones/db.10.0.2";
+};
+Перезапуск службы Bind9:
+
+Перезапустите службу Bind9 для применения изменений:
+
+bash
+Копировать код
+sudo systemctl restart bind9
+Настройка локальной машины для использования вашего DNS-сервера:
+
+Откройте файл /etc/resolv.conf и добавьте ваш DNS-сервер:
+
+bash
+Копировать код
+sudo nano /etc/resolv.conf
+Добавьте следующую строку в начало файла:
+
+bash
+Копировать код
+nameserver 10.0.2.15
+Обратите внимание, что изменения в /etc/resolv.conf могут быть временными и сбрасываться после перезагрузки. Чтобы сделать изменения постоянными, настройте файл /etc/systemd/resolved.conf:
+
+bash
+Копировать код
+sudo nano /etc/systemd/resolved.conf
+Найдите строку DNSStubListener=yes и измените на DNSStubListener=no. Затем найдите строку DNS= и добавьте IP-адрес вашего DNS-сервера:
+
+ini
+Копировать код
+[Resolve]
+DNS=10.0.2.15
+Перезапустите службу systemd-resolved:
+
+bash
+Копировать код
+sudo systemctl restart systemd-resolved
+Проверка DNS-сервера:
+
+Теперь вы можете проверить работу вашего DNS-сервера с помощью команды ping:
+
+bash
+Копировать код
+ping sanek.com
+Если все настроено правильно, вы должны получить ответы от вашего DNS-сервера.
